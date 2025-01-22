@@ -1,4 +1,3 @@
-````markdown
 # Currency Converter API Integration
 
 This is a simple Node.js application that integrates with a third-party currency conversion API to perform currency conversions and fetch exchange rates.
@@ -24,7 +23,6 @@ This is a simple Node.js application that integrates with a third-party currency
    git clone https://github.com/jagathvm/Currency-Converter-API-Integration.git
    cd Currency-Converter-API-Integration
    ```
-````
 
 2. Install the dependencies:
 
