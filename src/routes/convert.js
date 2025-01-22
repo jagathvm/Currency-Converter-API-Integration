@@ -1,12 +1,11 @@
+// Imports
 import { Router } from "express";
-import {
-  convertCurrency,
-  convertCurrencyV2,
-} from "../controllers/convert-controller.js";
+import { convertCurrency } from "../controllers/convert-controller.js";
 
+// Routes
 const router = Router();
 
 router.post("/convert", convertCurrency);
-router.post("/convert/v2", convertCurrencyV2);
 
+// Export
 export default router;
