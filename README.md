@@ -115,7 +115,7 @@ This will run the unit tests using Jest.
 │   ├── /helpers             # Helper functions for validation and API calls
 │   ├── /config              # Configuration files (e.g., API URIs)
 │   ├── app.js               # Express app setup
-│   ├── server.js            # Server entry point
+│   └── server.js            # Server entry point
 │
 ├── /tests                   # Unit tests
 ├── .babelrc                 # Babel configuration
@@ -128,7 +128,3 @@ This will run the unit tests using Jest.
 ## License
 
 This project is licensed under the MIT License.
-
-```
-
-```
