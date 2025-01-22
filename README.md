@@ -1,10 +1,10 @@
 # Currency Converter API Integration
 
-This is a simple Node.js application that integrates with a third-party currency conversion API to perform currency conversions and fetch exchange rates.
+This is a simple Node.js application that integrates with the [ExchangeRate-API](https://www.exchangerate-api.com) to perform currency conversions and fetch exchange rates.
 
 ## Features
 
-- **Currency Conversion**: Convert one currency to another using real-time exchange rates.
+- **Currency Conversion**: Convert one currency to another using real-time exchange rates provided by [ExchangeRate-API](https://www.exchangerate-api.com).
 - **Exchange Rates**: Fetch the latest exchange rates for a specified base currency.
 - **Error Handling**: Includes robust validation and error messages for invalid inputs and failed API requests.
 
@@ -12,7 +12,7 @@ This is a simple Node.js application that integrates with a third-party currency
 
 - **Backend**: Node.js
 - **Framework**: Express
-- **API**: Fetch real-time exchange rates from a third-party currency conversion API.
+- **API**: Fetch real-time exchange rates from [ExchangeRate-API](https://www.exchangerate-api.com).
 - **Testing**: Jest for unit tests.
 
 ## Installation
@@ -128,3 +128,7 @@ This will run the unit tests using Jest.
 ## License
 
 This project is licensed under the MIT License.
+
+API data is powered by [ExchangeRate-API](https://www.exchangerate-api.com).
+
+[![ExchangeRate-API](https://www.exchangerate-api.com/images/exchangerate-api-logo.svg)](https://www.exchangerate-api.com)
