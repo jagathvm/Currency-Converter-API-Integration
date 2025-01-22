@@ -131,4 +131,4 @@ This project is licensed under the MIT License.
 
 API data is powered by [ExchangeRate-API](https://www.exchangerate-api.com).
 
-[![ExchangeRate-API](https://www.exchangerate-api.com/images/exchangerate-api-logo.svg)](https://www.exchangerate-api.com)
+[![ExchangeRate-API](https://www.exchangerate-api.com/img/hr-logo-2022-ldpi-rc.png)](https://www.exchangerate-api.com)
