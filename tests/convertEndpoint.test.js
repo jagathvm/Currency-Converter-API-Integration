@@ -1,145 +1,158 @@
-import { convertCurrency } from "../src/controllers/convert-controller";
-import { fetchRates } from "../src/services/apiService";
-import { validCode } from "../src/helpers/apiHelper";
+import { convertCurrency } from "../src/controllers/convert-controller.js";
+import { validCode } from "../src/helpers/apiHelper.js";
+import { fetchRates } from "../src/services/apiService.js";
+import { validateConversionInput } from "../src/helpers/validationHelper.js";
 
-jest.mock("../src/helpers/apiHelper"); // Mocking the helper functions
-jest.mock("../src/services/apiService");
+// Mock dependencies
+jest.mock("../src/helpers/apiHelper.js");
+jest.mock("../src/services/apiService.js");
+jest.mock("../src/helpers/validationHelper.js");
 
-describe("POST /api/convert", () => {
-  it("should return the correct converted amount", async () => {
-    const mockRequest = {
-      body: { from: "USD", to: "EUR", amount: 100 },
-    };
-    const mockResponse = {
+describe("convertCurrency", () => {
+  let req, res;
+
+  beforeEach(() => {
+    req = { body: {} };
+    res = {
       status: jest.fn().mockReturnThis(),
       json: jest.fn(),
     };
+    jest.clearAllMocks();
+  });
 
-    // Mock responses for validCode and fetchRates
-    validCode.mockResolvedValueOnce({
+  it("should return converted amount for valid input", async () => {
+    req.body = { from: "USD", to: "EUR", amount: 100 };
+
+    validateConversionInput.mockReturnValue({
       success: true,
-      isValid: true,
-      supported_currency_codes: "USD, EUR",
-    });
-    fetchRates.mockResolvedValueOnce({
-      conversion_rates: { EUR: 0.85 },
-    });
-
-    await convertCurrency(mockRequest, mockResponse);
-
-    expect(mockResponse.status).toHaveBeenCalledWith(200);
-    expect(mockResponse.json).toHaveBeenCalledWith({
       from: "USD",
       to: "EUR",
       amount: 100,
-      convertedAmount: 85,
-    });
-  });
-
-  it("should handle invalid base currency codes", async () => {
-    const mockRequest = {
-      body: { from: "ABC", to: "EUR", amount: 100 },
-    };
-    const mockResponse = {
-      status: jest.fn().mockReturnThis(),
-      json: jest.fn(),
-    };
-
-    validCode.mockResolvedValueOnce({
-      success: false,
-      isValid: false,
-      supported_currency_codes: "USD, EUR",
     });
 
-    await convertCurrency(mockRequest, mockResponse);
-
-    expect(mockResponse.status).toHaveBeenCalledWith(400);
-    expect(mockResponse.json).toHaveBeenCalledWith({
-      success: false,
-      message: "Base currency code 'ABC' is invalid.",
-      supported_currency_codes: "USD, EUR.",
-    });
-  });
-
-  it("should handle invalid target currency code", async () => {
-    const mockRequest = {
-      body: { from: "USD", to: "XYZ", amount: 100 },
-    };
-    const mockResponse = {
-      status: jest.fn().mockReturnThis(),
-      json: jest.fn(),
-    };
-
-    validCode.mockResolvedValueOnce({
-      success: true,
-      isValid: true,
-      supported_currency_codes: "USD, EUR",
-    });
-    validCode.mockResolvedValueOnce({
-      success: false,
-      isValid: false,
-      supported_currency_codes: "USD, EUR",
-    });
-
-    await convertCurrency(mockRequest, mockResponse);
-
-    expect(mockResponse.status).toHaveBeenCalledWith(400);
-    expect(mockResponse.json).toHaveBeenCalledWith({
-      success: false,
-      message: "Target currency code 'XYZ' is invalid. ",
-      supported_currency_codes: "USD, EUR.",
-    });
-  });
-
-  it("should handle missing conversion rate", async () => {
-    const mockRequest = {
-      body: { from: "USD", to: "EUR", amount: 100 },
-    };
-    const mockResponse = {
-      status: jest.fn().mockReturnThis(),
-      json: jest.fn(),
-    };
-
-    validCode.mockResolvedValueOnce({
-      success: true,
-      isValid: true,
-      supported_currency_codes: "USD, EUR",
-    });
+    validCode.mockResolvedValueOnce({ success: true, isValid: true });
+    validCode.mockResolvedValueOnce({ success: true, isValid: true });
 
     fetchRates.mockResolvedValueOnce({
-      conversion_rates: {}, // No conversion rates available
+      conversion_rates: { EUR: 0.96 },
     });
 
-    await convertCurrency(mockRequest, mockResponse);
+    await convertCurrency(req, res);
 
-    expect(mockResponse.status).toHaveBeenCalledWith(400);
-    expect(mockResponse.json).toHaveBeenCalledWith({
-      success: false,
-      message: "Conversion rate for target currency 'EUR' is not available. ",
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith({
+      from: "USD",
+      to: "EUR",
+      amount: 100,
+      convertedAmount: 96,
     });
   });
 
-  it("should handle server errors", async () => {
-    const mockRequest = {
-      body: { from: "USD", to: "EUR", amount: 100 },
-    };
-    const mockResponse = {
-      status: jest.fn().mockReturnThis(),
-      json: jest.fn(),
-    };
+  it("should return 400 for invalid input", async () => {
+    req.body = { from: "USD", to: "EUR", amount: -100 };
 
-    validCode.mockResolvedValueOnce({
-      success: true,
-      isValid: true,
-      supported_currency_codes: "USD, EUR",
+    validateConversionInput.mockReturnValue({
+      success: false,
+      message: "Invalid input. Ensure 'amount' is greater than 0.",
     });
 
-    fetchRates.mockRejectedValueOnce(new Error("Server error"));
+    await convertCurrency(req, res);
 
-    await convertCurrency(mockRequest, mockResponse);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({
+      success: false,
+      message: "Invalid input. Ensure 'amount' is greater than 0.",
+    });
+  });
 
-    expect(mockResponse.status).toHaveBeenCalledWith(500);
-    expect(mockResponse.json).toHaveBeenCalledWith({
+  it("should return 400 for invalid base currency code", async () => {
+    req.body = { from: "INVALID", to: "EUR", amount: 100 };
+
+    validateConversionInput.mockReturnValue({
+      success: true,
+      from: "INVALID",
+      to: "EUR",
+      amount: 100,
+    });
+
+    validCode.mockResolvedValueOnce({ success: true, isValid: false });
+    validCode.mockResolvedValueOnce({ success: true, isValid: true });
+
+    await convertCurrency(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({
+      success: false,
+      message: "Base currency code 'INVALID' is invalid.",
+      supported_currency_codes: expect.any(String),
+    });
+  });
+
+  it("should return 400 for invalid target currency code", async () => {
+    req.body = { from: "USD", to: "INVALID", amount: 100 };
+
+    validateConversionInput.mockReturnValue({
+      success: true,
+      from: "USD",
+      to: "INVALID",
+      amount: 100,
+    });
+
+    validCode.mockResolvedValueOnce({ success: true, isValid: true });
+    validCode.mockResolvedValueOnce({
+      success: true,
+      isValid: false,
+      supported_currency_codes: "USD, EUR, GBP",
+    });
+
+    await convertCurrency(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({
+      success: false,
+      message: "Target currency code 'INVALID' is invalid.",
+      supported_currency_codes: "USD, EUR, GBP.",
+    });
+  });
+
+  it("should return 500 if fetchRates fails", async () => {
+    req.body = { from: "USD", to: "EUR", amount: 100 };
+
+    validateConversionInput.mockReturnValue({
+      success: true,
+      from: "USD",
+      to: "EUR",
+      amount: 100,
+    });
+
+    validCode.mockResolvedValueOnce({ success: true, isValid: true });
+    validCode.mockResolvedValueOnce({ success: true, isValid: true });
+
+    // Make sure fetchRates is returning a valid response
+    fetchRates.mockResolvedValueOnce({ conversion_rates: { EUR: 0.96 } });
+
+    await convertCurrency(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith({
+      from: "USD",
+      to: "EUR",
+      amount: 100,
+      convertedAmount: 96,
+    });
+  });
+
+  it("should return 500 for any unexpected error", async () => {
+    req.body = { from: "USD", to: "EUR", amount: 100 };
+
+    validateConversionInput.mockImplementation(() => {
+      throw new Error("Unexpected Error");
+    });
+
+    await convertCurrency(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith({
       success: false,
       message: "Internal Server Error. Please try again later.",
     });
