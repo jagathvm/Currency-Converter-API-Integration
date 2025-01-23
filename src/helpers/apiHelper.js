@@ -8,15 +8,17 @@ export const validCode = async (value) => {
     const { success, supported_codes } = await getSupportedCurrencyCodes();
 
     // If no codes are found in the response, return an error
-    if (!success) {
-      return { success: false, isValid: false, supported_currency_codes: null };
-    }
+    if (!success)
+      return {
+        success: false,
+        isValid: false,
+      };
 
     // Check if the base currency exists in the supported list
     const isValid = supported_codes.some(([code]) => code === value);
 
     // If the base currency is invalid, return an error
-    if (!isValid) {
+    if (!isValid)
       return {
         success: true,
         isValid: false,
@@ -24,14 +26,11 @@ export const validCode = async (value) => {
           .map(([code]) => code)
           .join(", "),
       };
-    }
 
+    // If the base currency is valid, return success and isValid
     return {
       success: true,
       isValid: true,
-      supported_currency_codes: supported_codes
-        .map(([code]) => code)
-        .join(", "),
     };
   } catch (error) {
     // Handle errors
