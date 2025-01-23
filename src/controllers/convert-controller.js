@@ -5,48 +5,37 @@ import { validateConversionInput } from "../helpers/validationHelper.js";
 
 // Controller
 export const convertCurrency = async (req, res) => {
-  // Validate the input
-  const { success, message, from, to, amount } = validateConversionInput(
-    req.body
-  );
-  if (!success) return res.status(400).json({ success, message });
-
   try {
-    // Check if the base currency exists in the supported list
-    const {
-      success,
-      isValid: validBase,
-      supported_currency_codes: validBaseCurrencyCodes,
-    } = await validCode(from);
+    // Validate the input
+    const { success, message, from, to, amount } = validateConversionInput(
+      req.body
+    );
+    if (!success) return res.status(400).json({ success, message });
 
-    // If not a successful response, return an error
-    if (!success)
+    // Validate base and target currencies concurrently
+    const [baseValidation, targetValidation] = await Promise.all([
+      validCode(from),
+      validCode(to),
+    ]);
+
+    if (!baseValidation.success || !targetValidation.success)
       return res.status(500).json({
         success: false,
         message: "Internal Server Error. Please try again later.",
       });
 
-    // If the base currency is invalid, return an error
-    if (!validBase)
+    if (!baseValidation.isValid)
       return res.status(400).json({
         success: false,
         message: `Base currency code '${from}' is invalid.`,
-        supported_currency_codes: `${validBaseCurrencyCodes}. `,
+        supported_currency_codes: `${baseValidation.supported_currency_codes}. `,
       });
 
-    // Check if the target currency exists in the supported list
-    // console.log(await validCode(to));
-    const {
-      isValid: validTarget,
-      supported_currency_codes: validTargetCurrencyCodes,
-    } = await validCode(to);
-
-    // If the target currency is invalid, return an error
-    if (!validTarget)
+    if (!targetValidation.isValid)
       return res.status(400).json({
         success: false,
-        message: `Target currency code '${to}' is invalid. `,
-        supported_currency_codes: `${validTargetCurrencyCodes}. `,
+        message: `Target currency code '${to}' is invalid.`,
+        supported_currency_codes: `${targetValidation.supported_currency_codes}.`,
       });
 
     // Fetch all conversion rates
@@ -54,13 +43,6 @@ export const convertCurrency = async (req, res) => {
 
     // Check if the target currency exists in the conversion rates
     const conversionRateOfTarget = conversion_rates[to];
-
-    // If the target currency is not found in the conversion rates, return an error
-    if (!conversionRateOfTarget)
-      return res.status(400).json({
-        success: false,
-        message: `Conversion rate for target currency '${to}' is not available. `,
-      });
 
     // Calculate the converted amount
     const convertedAmount = amount * conversionRateOfTarget;
@@ -74,7 +56,7 @@ export const convertCurrency = async (req, res) => {
     });
   } catch (error) {
     // Log the error
-    console.error(`Conversion error: ${error.message}`);
+    console.error(`Conversion API error: ${error}`);
     console.error(error.stack);
 
     // Return an error
