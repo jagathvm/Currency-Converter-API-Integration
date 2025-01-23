@@ -57,7 +57,6 @@ export const convertCurrency = async (req, res) => {
   } catch (error) {
     // Log the error
     console.error(`Conversion API error: ${error}`);
-    console.error(error.stack);
 
     // Return an error
     res.status(500).json({
